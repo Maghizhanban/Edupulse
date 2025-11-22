@@ -77,13 +77,13 @@ def main():
     completed_units = st.multiselect(
         "✔️ Select the units you have completed:",
         units,
-        default=["Unit 1", "Unit 2", "Unit 3", "Unit 4"]  # You said 4 units completed
+        default=["Unit 1", "Unit 2", "Unit 3", "Unit 4"]
     )
 
     completed_count = len(completed_units)
     total_units = len(units)
-
     percent_completed = (completed_count / total_units) * 100
+
     st.progress(percent_completed / 100)
 
     st.write(f"📊 *Completed: {completed_count}/{total_units} units → {percent_completed:.1f}%*")
@@ -99,14 +99,11 @@ def main():
     else:
         st.error("🔴 Very low preparation. Start studying now!")
 
-    expected_marks = percent_completed * 1.2
-    if expected_marks > 100:
-        expected_marks = 100
-
+    expected_marks = min(percent_completed * 1.2, 100)
     st.write(f"📈 *Expected Semester Marks Based on Unit Completion: {expected_marks:.2f} / 100*")
 
     st.markdown("---")
     st.write("✨ Smart Bot for Academic Planning | Built with ❤️")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
