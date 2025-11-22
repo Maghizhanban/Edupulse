@@ -7,74 +7,67 @@ def calculate_cie_marks(internal1, internal2, assignment1, assignment2):
     a2 = (assignment2 / 10) * 4
     return round(i1 + i2 + a1 + a2, 2)
 
-def predict_requirements(cie_secured, target):
-    remaining = target - cie_secured
-    
-    if remaining <= 0:
-        return {
-            "model_required": 0,
-            "sem_required": 0,
-            "feasible": True,
-            "message": "🎉 You have already achieved the target with CIE alone!"
-        }
-    
-    model_required = min((remaining * 10) / 76, 10)
-    sem_required = min((remaining * 60) / 76, 60)
+def calculate_requirements(cie_scored, target_final):
+    total_needed = target_final - cie_scored
 
-    return {
-        "model_required": round(model_required, 2),
-        "sem_required": round(sem_required, 2),
-        "model_percent": round((model_required / 10) * 100, 2),
-        "sem_percent": round((sem_required / 60) * 100, 2)
-    }
+    if total_needed <= 0:
+        return (0, 0, 0, 0, "🎉 You already achieved the target with internal marks!")
 
-def feasibility_verdict(model_percent, sem_percent):
-    if model_percent <= 85 and sem_percent <= 75:
-        return "🟢 Highly feasible. You can comfortably reach your target with consistency."
+    # Convert needed marks using correct weightage:
+    model_marks_needed = min((total_needed / 76) * 10, 10)   # Model = 10 marks
+    semester_marks_needed = min((total_needed / 76) * 60, 60) # Semester = 60 marks
+
+    # Convert to percentages
+    model_percent = round((model_marks_needed / 10) * 100, 2)
+    semester_percent = round((semester_marks_needed / 60) * 100, 2)
+
+    return model_marks_needed, semester_marks_needed, model_percent, semester_percent, ""
+
+def feasibility_comment(model_percent, sem_percent):
+    if model_percent <= 75 and sem_percent <= 70:
+        return "🟢 Very achievable with good consistency!"
+    elif model_percent <= 85 and sem_percent <= 80:
+        return "🟡 Doable, but requires focus and practice."
     elif model_percent <= 95 and sem_percent <= 90:
-        return "🟡 Challenging but possible. Aim high and stay consistent."
+        return "🟠 Hard, but possible if you give dedicated effort."
     else:
-        return "🔴 Very difficult. Requires near-perfect scores. Reconsider target."
+        return "🔴 Extremely difficult. Near perfection required. Consider a realistic target like 80–85."
 
 def main():
-    st.title("🎓 Smart Academic Performance Bot")
-    st.write("📊 Know your CIE status & plan Model + Semester exams wisely!")
+    st.title("🎓 Smart Academic Performance & Target Score Bot")
+    st.write("Analyze your CIE, Model, and Final Semester targets in seconds!")
 
     subjects = ["ENGLISH", "TAMIL", "PHYSICS", "CHEMISTRY", "MATHS", "GRAPHICS"]
     subject = st.selectbox("📘 Select Subject", subjects)
 
-    st.subheader(f"📘 Enter Completed Marks for {subject}")
+    st.subheader("📥 Enter Your Marks")
+    i1 = st.number_input("Internal 1 (out of 50)", 0.0, 50.0)
+    i2 = st.number_input("Internal 2 (out of 50)", 0.0, 50.0)
+    a1 = st.number_input("Assignment 1 (out of 10)", 0.0, 10.0)
+    a2 = st.number_input("Assignment 2 (out of 10)", 0.0, 10.0)
 
-    i1 = st.number_input("Internal 1 (out of 50)", 0.0, 50.0, step=0.5)
-    i2 = st.number_input("Internal 2 (out of 50)", 0.0, 50.0, step=0.5)
-    a1 = st.number_input("Assignment 1 (out of 10)", 0.0, 10.0, step=0.5)
-    a2 = st.number_input("Assignment 2 (out of 10)", 0.0, 10.0, step=0.5)
-
-    if st.button("Calculate CIE ➤"):
+    if st.button("Calculate CIE"):
         cie_scored = calculate_cie_marks(i1, i2, a1, a2)
-        st.success(f"📊 CIE Secured So Far: **{cie_scored} / 24**")
+        st.success(f"📊 CIE Secured: {cie_scored} / 24")
 
-        target = st.number_input("🎯 Enter your Final Target (out of 100)", 50.0, 100.0)
+        target_final = st.slider("🎯 Final Target (out of 100)", 50, 100)
 
-        result = predict_requirements(cie_scored, target)
+        model_needed, sem_needed, mod_per, sem_per, msg = calculate_requirements(cie_scored, target_final)
 
-        if result["model_required"] == 0:
-            st.success(result["message"])
+        if msg:
+            st.success(msg)
         else:
-            st.subheader("📉 Requirement Analysis")
-            st.write(f"📝 Model Exam (100 → 10): Need **{result['model_required']} / 10** → **{result['model_percent']}%**")
-            st.write(f"📘 Final Sem (100 → 60): Need **{result['sem_required']} / 60** → **{result['sem_percent']}%**")
+            st.subheader("📉 Requirements Summary")
+            st.write(f"📝 Model Exam: Need {model_needed:.2f}/10 → {mod_per:.2f}%")
+            st.write(f"📘 Final Semester: Need {sem_needed:.2f}/60 → {sem_per:.2f}%")
 
-            verdict = feasibility_verdict(result["model_percent"], result["sem_percent"])
-            st.info(f"💡 Suggestion: {verdict}")
+            st.info(feasibility_comment(mod_per, sem_per))
 
-            # Best realistic suggestion
-            if result["model_percent"] > 95 or result["sem_percent"] > 90:
-                realistic = round((cie_scored + 8 + 50) / 1.6, 2)
-                st.warning(f"🎯 Realistic Safe Target you can aim for: **{realistic}**")
+            if mod_per >= 95 or sem_per >= 90:
+                st.warning("🏁 Perfect scores needed. Set a more practical goal like 80–85 for safety!")
 
     st.markdown("---")
-    st.write("✨ Designed for students to plan smart & score smarter 🚀")
+    st.write("✨ Smart Bot for Academic Planning | Built with ❤️")
 
 if __name__ == "__main__":
     main()
