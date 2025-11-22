@@ -1,5 +1,10 @@
 import streamlit as st
 
+# ---------------------- SESSION STATE HANDLING ----------------------
+if "target_final" not in st.session_state:
+    st.session_state.target_final = 75  # Default target
+
+# ---------------------- MARK CALCULATION FUNCTIONS ----------------------
 def calculate_cie_marks(internal1, internal2, assignment1, assignment2):
     i1 = (internal1 / 50) * 8
     i2 = (internal2 / 50) * 8
@@ -31,12 +36,13 @@ def feasibility_comment(model_percent, sem_percent):
     else:
         return "🔴 Extremely difficult. Near perfection required. Consider a realistic target like 80–85."
 
+# ---------------------- MAIN APP ----------------------
 def main():
     st.title("🎓 Smart Academic Performance & Target Score Bot")
     st.write("Analyze your CIE, Model, and Final Semester targets in seconds!")
 
     subjects = ["ENGLISH", "TAMIL", "PHYSICS", "CHEMISTRY", "MATHS", "GRAPHICS"]
-    subject = st.selectbox("📘 Select Subject", subjects)
+    st.selectbox("📘 Select Subject", subjects)
 
     st.subheader("📥 Enter Your Marks")
     i1 = st.number_input("Internal 1 (out of 50)", 0.0, 50.0)
@@ -45,10 +51,19 @@ def main():
     a2 = st.number_input("Assignment 2 (out of 10)", 0.0, 10.0)
 
     if st.button("Calculate CIE"):
-        cie_scored = calculate_cie_marks(i1, i2, a1, a2)
+        st.session_state.cie_scored = calculate_cie_marks(i1, i2, a1, a2)
+
+    if "cie_scored" in st.session_state:
+        cie_scored = st.session_state.cie_scored
         st.success(f"📊 CIE Secured: {cie_scored} / 24")
 
-        target_final = st.slider("🎯 Final Target (out of 100)", 50, 100)
+        # Target persists without resetting
+        st.session_state.target_final = st.slider(
+            "🎯 Final Target (out of 100)",
+            50, 100, st.session_state.target_final
+        )
+
+        target_final = st.session_state.target_final
 
         model_needed, sem_needed, mod_per, sem_per, msg = calculate_requirements(cie_scored, target_final)
 
@@ -64,12 +79,11 @@ def main():
             if mod_per >= 95 or sem_per >= 90:
                 st.warning("🏁 Perfect scores needed. Set a more practical goal like 80–85 for safety!")
 
-    # ------------------------ UNIT-BASED LESSON TARGET TRACKER ------------------------
+    # ------------------------ UNIT TRACKER ------------------------
     st.markdown("---")
     st.subheader("📚 Lesson Completion Tracker (Unit Based)")
 
     units = ["Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5"]
-
     st.write("📌 CIE 1 covers: Unit 1 & Unit 2")
     st.write("📌 CIE 2 covers: Unit 3 & Unit 4")
     st.write("📌 Model & Semester covers: All 5 Units")
@@ -85,7 +99,6 @@ def main():
     percent_completed = (completed_count / total_units) * 100
 
     st.progress(percent_completed / 100)
-
     st.write(f"📊 *Completed: {completed_count}/{total_units} units → {percent_completed:.1f}%*")
 
     if completed_count == 5:
